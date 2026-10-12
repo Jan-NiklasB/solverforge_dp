@@ -1,0 +1,33 @@
+random_seed = 65468462165
+environment_mode = "non_reproducible"
+move_thread_count = "auto"
+
+[[phases]]
+type = "construction_heuristic"
+construction_heuristic_type = "first_fit"
+entity_class = "Schichtzuordnung"
+variable_name = "mitarbeiter_idx"
+
+[termination]
+seconds_spent_limit = 300
+unimproved_seconds_spent_limit = 60
+
+[[phases]]
+type = "local_search"
+
+[phases.acceptor]
+type = "great_deluge"
+
+[phases.move_selector]
+type = "change_move_selector"
+variable_name = "mitarbeiter_idx"
+
+[phases.forager]
+type = "accepted_count"
+limit = 32
+
+
+# Opt in to bounded candidate-pull diagnostics when needed. Trace detail is
+# retained separately from ordinary status, snapshot, and SSE telemetry.
+# [candidate_trace]
+# max_entries = 100000

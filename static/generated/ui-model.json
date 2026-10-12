@@ -1,0 +1,44 @@
+{
+  "conflictRepairs": [],
+  "constraints": [
+    "balancing",
+    "benoetigte_qualifikation",
+    "shift_assigned",
+    "ueberlappende_schichten"
+  ],
+  "entities": [
+    {
+      "label": "Schichtzuordnung",
+      "name": "schichtzuordnung",
+      "plural": "schichtzuordnungs"
+    }
+  ],
+  "facts": [
+    {
+      "label": "Mitarbeiter",
+      "name": "mitarbeiter",
+      "plural": "mitarbeiters"
+    },
+    {
+      "label": "Schicht",
+      "name": "schicht",
+      "plural": "schichts"
+    }
+  ],
+  "scalarGroups": [],
+  "views": [
+    {
+      "allowsUnassigned": false,
+      "countableRange": null,
+      "entity": "schichtzuordnung",
+      "entityPlural": "schichtzuordnungs",
+      "id": "schichtzuordnung-mitarbeiter_idx",
+      "kind": "scalar",
+      "label": "Schichtzuordnung · mitarbeiter_idx",
+      "listMetadata": {},
+      "scalarHooks": {},
+      "sourcePlural": "mitarbeiters",
+      "variableField": "mitarbeiter_idx"
+    }
+  ]
+}

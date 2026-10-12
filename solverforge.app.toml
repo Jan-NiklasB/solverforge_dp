@@ -1,0 +1,72 @@
+scalar_groups = []
+conflict_repairs = []
+
+[app]
+name = "dp"
+starter = "neutral-shell"
+shell = "web"
+cli_version = "3.3.1"
+
+[runtime]
+target = "solverforge 0.19.7"
+runtime_source = "crates.io: solverforge 0.19.7"
+ui_source = "crates.io: solverforge-ui 0.9.0"
+
+[demo]
+default_size = "standard"
+available_sizes = [
+    "small",
+    "standard",
+    "large",
+]
+
+[solution]
+name = "Plan"
+score = "HardMediumSoftScore"
+scalar_groups_path = ""
+conflict_repairs_path = ""
+
+[[facts]]
+name = "mitarbeiter"
+plural = "mitarbeiters"
+kind = "problem_fact"
+
+[[facts]]
+name = "schicht"
+plural = "schichts"
+kind = "problem_fact"
+
+[[entities]]
+name = "schichtzuordnung"
+plural = "schichtzuordnungs"
+kind = "planning_entity"
+
+[[variables]]
+entity = "schichtzuordnung"
+entity_plural = "schichtzuordnungs"
+field = "mitarbeiter_idx"
+kind = "scalar"
+range = "mitarbeiters"
+elements = ""
+allows_unassigned = false
+enabled = true
+
+[[constraints]]
+name = "balancing"
+module = "balancing"
+enabled = true
+
+[[constraints]]
+name = "benoetigte_qualifikation"
+module = "benoetigte_qualifikation"
+enabled = true
+
+[[constraints]]
+name = "shift_assigned"
+module = "shift_assigned"
+enabled = true
+
+[[constraints]]
+name = "ueberlappende_schichten"
+module = "ueberlappende_schichten"
+enabled = true

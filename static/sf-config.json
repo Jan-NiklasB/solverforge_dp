@@ -1,0 +1,29 @@
+{
+  "title": "dp",
+  "subtitle": "Constraint Optimizer",
+  "constraints": [
+    "shift_assigned",
+    "benoetigte_qualifikation",
+    "balancing",
+    "ueberlappende_schichten"
+  ],
+  "entities": [
+    {
+      "name": "schichtzuordnung",
+      "label": "Schichtzuordnung",
+      "plural": "schichtzuordnungs"
+    }
+  ],
+  "facts": [
+    {
+      "name": "mitarbeiter",
+      "label": "Mitarbeiter",
+      "plural": "mitarbeiters"
+    },
+    {
+      "name": "schicht",
+      "label": "Schicht",
+      "plural": "schichts"
+    }
+  ]
+}
