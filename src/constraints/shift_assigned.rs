@@ -6,18 +6,9 @@ use solverforge::IncrementalConstraint;
 pub fn constraint() -> impl IncrementalConstraint<Plan, HardMediumSoftScore> {
     ConstraintFactory::<Plan, HardMediumSoftScore>::new()
         .for_each(Plan::schichtzuordnungs())
-        .penalize(hard_weight(unary_weight))
-        .named("shift_assigned")
-}
-
-fn unary_condition(_entity: &Schichtzuordnung) -> bool {
-    _entity.mitarbeiter_idx.is_none()
-}
-
-fn unary_weight(entity: &Schichtzuordnung) -> HardMediumSoftScore {
-    if unary_condition(entity) {
-        <HardMediumSoftScore as Score>::one_hard()
-    } else {
-        <HardMediumSoftScore as Score>::zero()
-    }
+        .filter(|sz: &Schichtzuordnung| {
+            sz.mitarbeiter_idx.is_none()
+        })
+        .penalize(HardMediumSoftScore::one_hard())
+        .named("Kein Mitarbeiter zur Schicht zugewiesen")
 }

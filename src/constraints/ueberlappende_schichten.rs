@@ -40,5 +40,5 @@ pub fn constraint() -> impl IncrementalConstraint<Plan, HardMediumSoftScore> {
             },
         )
         .penalize(HardMediumSoftScore::ONE_HARD)
-        .named("ueberlappende_schichten")
+        .named("Schichten überlappen sich")
 }

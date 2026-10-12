@@ -72,9 +72,9 @@ fn generate_plan(count_mitarbeiters: usize, count_schichts: usize) -> Plan {
     let mitarbeiters = (0..count_mitarbeiters)
         .map(|idx| Mitarbeiter {
             id: format!("mitarbeiter-{idx}"),
-            index: idx + 1,
+            index: idx,
             name: format!("mitarbeiter-{idx}"),
-            stammwache: (*["Verden", "Achim"].choose(&mut rand::rng()).unwrap()).parse::<String>().unwrap(),
+            stammwache: (*["Station 40", "Station 42"].choose(&mut rand::rng()).unwrap()).parse::<String>().unwrap(),
             schichtgruppe: rng().random_range(1..5),
             qualifikation: vec![*quali.choose(&mut rand::rng()).unwrap()],
             keine_nacht: rng().random_bool(0.05),
@@ -87,7 +87,7 @@ fn generate_plan(count_mitarbeiters: usize, count_schichts: usize) -> Plan {
         .map(|idx| {
             let mut schicht = Schicht {
                 id: format!("schicht-{idx}"),
-                index: idx + 1,
+                index: idx,
                 name: format!("schicht-{idx}"),
                 start: date.clone() + chrono::Duration::days(rng().random_range(0..10)) + chrono::Duration::hours(*[0, 12].choose(&mut rand::rng()).unwrap() as i64),
                 ende: Default::default(),

@@ -5,7 +5,8 @@
     "shift_assigned",
     "benoetigte_qualifikation",
     "balancing",
-    "ueberlappende_schichten"
+    "ueberlappende_schichten",
+    "ruhezeit"
   ],
   "entities": [
     {

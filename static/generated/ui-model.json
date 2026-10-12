@@ -3,6 +3,7 @@
   "constraints": [
     "balancing",
     "benoetigte_qualifikation",
+    "ruhezeit",
     "shift_assigned",
     "ueberlappende_schichten"
   ],

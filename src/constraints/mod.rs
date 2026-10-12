@@ -13,6 +13,7 @@ mod shift_assigned;
 mod benoetigte_qualifikation;
 mod balancing;
 mod ueberlappende_schichten;
+mod ruhezeit;
 // @solverforge:end constraint-modules
 
 mod assemble {
@@ -25,6 +26,7 @@ mod assemble {
             benoetigte_qualifikation::constraint(),
             balancing::constraint(),
             ueberlappende_schichten::constraint(),
+            ruhezeit::constraint(),
         )
         // @solverforge:end constraint-calls
     }

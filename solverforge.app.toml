@@ -62,6 +62,11 @@ module = "benoetigte_qualifikation"
 enabled = true
 
 [[constraints]]
+name = "ruhezeit"
+module = "ruhezeit"
+enabled = true
+
+[[constraints]]
 name = "shift_assigned"
 module = "shift_assigned"
 enabled = true
