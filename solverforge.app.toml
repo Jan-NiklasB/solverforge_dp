@@ -67,6 +67,11 @@ module = "ruhezeit"
 enabled = true
 
 [[constraints]]
+name = "selber_block"
+module = "selber_block"
+enabled = true
+
+[[constraints]]
 name = "shift_assigned"
 module = "shift_assigned"
 enabled = true

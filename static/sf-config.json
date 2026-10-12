@@ -6,7 +6,8 @@
     "benoetigte_qualifikation",
     "balancing",
     "ueberlappende_schichten",
-    "ruhezeit"
+    "ruhezeit",
+    "selber_block"
   ],
   "entities": [
     {

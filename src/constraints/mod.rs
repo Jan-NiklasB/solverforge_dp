@@ -14,6 +14,7 @@ mod benoetigte_qualifikation;
 mod balancing;
 mod ueberlappende_schichten;
 mod ruhezeit;
+mod selber_block;
 // @solverforge:end constraint-modules
 
 mod assemble {
@@ -27,6 +28,7 @@ mod assemble {
             balancing::constraint(),
             ueberlappende_schichten::constraint(),
             ruhezeit::constraint(),
+            selber_block::constraint(),
         )
         // @solverforge:end constraint-calls
     }
