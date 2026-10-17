@@ -1,6 +1,7 @@
 {
   "conflictRepairs": [],
   "constraints": [
+    "60h_max",
     "balancing",
     "benoetigte_qualifikation",
     "ruhezeit",
@@ -34,9 +35,22 @@
       "countableRange": null,
       "entity": "schichtzuordnung",
       "entityPlural": "schichtzuordnungs",
-      "id": "schichtzuordnung-mitarbeiter_idx",
-      "kind": "scalar",
-      "label": "Schichtzuordnung · mitarbeiter_idx",
+      "id": "nach-mitarbeiter",
+      "kind": "schedule-by-employee",
+      "label": "Nach Mitarbeiter",
+      "listMetadata": {},
+      "scalarHooks": {},
+      "sourcePlural": "mitarbeiters",
+      "variableField": "mitarbeiter_idx"
+    },
+    {
+      "allowsUnassigned": false,
+      "countableRange": null,
+      "entity": "schichtzuordnung",
+      "entityPlural": "schichtzuordnungs",
+      "id": "nach-wache",
+      "kind": "schedule-by-location",
+      "label": "Nach Wache",
       "listMetadata": {},
       "scalarHooks": {},
       "sourcePlural": "mitarbeiters",

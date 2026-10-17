@@ -1,33 +1,95 @@
-random_seed = 65468462165
 environment_mode = "non_reproducible"
 move_thread_count = "auto"
 
+[termination]
+seconds_spent_limit = 3600
+
+# ==========================================
+# PHASE 1: KONSTRUKTION (Feasibility-Start)
+# Unzugewiesene Schichtzuordnungen sind hart, daher wird jede Zuordnung
+# zugewiesen (assign_when_candidate_exists). cheapest_insertion waehlt je
+# Zuordnung den konfliktguenstigsten Kandidaten.
+# ==========================================
 [[phases]]
+name = "1. Konstruktion"
 type = "construction_heuristic"
-construction_heuristic_type = "first_fit"
+index = 1
+construction_heuristic_type = "cheapest_insertion"
 entity_class = "Schichtzuordnung"
 variable_name = "mitarbeiter_idx"
+construction_obligation = "assign_when_candidate_exists"
 
-[termination]
-seconds_spent_limit = 300
-unimproved_seconds_spent_limit = 60
-
+# ==========================================
+# PHASE 2: FEASIBILITY (Hard -> 0)
+# Tabu Search minimiert die Hard-Verletzungen und endet exakt, sobald
+# hard = 0 erreicht ist (best_score_limit). So wird die Zeit bis zur ersten
+# zulaessigen Loesung nicht mit Soft-Optimierung verbraucht.
+# ==========================================
 [[phases]]
+name = "2. Feasibility (Tabu Search)"
 type = "local_search"
+index = 2
 
 [phases.acceptor]
-type = "great_deluge"
+type = "tabu_search"
+move_tabu_size = 10
+aspiration_enabled = true
+
+[phases.forager]
+type = "first_best_score_improving"
 
 [phases.move_selector]
+type = "union_move_selector"
+selection_order = "stratified_random"
+weighting = "equal"
+
+[[phases.move_selector.selectors]]
 type = "change_move_selector"
 variable_name = "mitarbeiter_idx"
 
+[[phases.move_selector.selectors]]
+type = "swap_move_selector"
+variable_name = "mitarbeiter_idx"
+
+[phases.termination]
+best_score_limit = "0hard/-1000000000medium/-1000000000soft"
+unimproved_seconds_spent_limit = 120
+
+# ==========================================
+# PHASE 3: OPTIMIERUNG (Medium/Soft)
+# Great Deluge hebt das Wasser-Niveau je Step langsam an (rain_speed) und
+# akzeptiert Zuege oberhalb des Niveaus, also auch nicht-verbessernde Zuege.
+# So entkommt die Suche lokalen Optima. Nach Erreichen von hard = 0 werden hier
+# nur noch Moves/Swaps *innerhalb derselben Qualifikation* evaluiert
+# (nearby_*_move_selector); die Kandidaten liefern die nearby_*-Hooks der
+# Variable mitarbeiter_idx.
+# ==========================================
+[[phases]]
+name = "3. Optimierung (Great Deluge)"
+index = 3
+type = "local_search"
+
+[phases.acceptor]
+type = "tabu_search"
+move_tabu_size = 10
+
 [phases.forager]
-type = "accepted_count"
-limit = 32
+type = "first_best_score_improving"
 
+[phases.move_selector]
+type = "union_move_selector"
+selection_order = "stratified_random"
+weighting = "equal"
 
-# Opt in to bounded candidate-pull diagnostics when needed. Trace detail is
-# retained separately from ordinary status, snapshot, and SSE telemetry.
-# [candidate_trace]
-# max_entries = 100000
+[[phases.move_selector.selectors]]
+type = "nearby_change_move_selector"
+variable_name = "mitarbeiter_idx"
+max_nearby = 64
+
+[[phases.move_selector.selectors]]
+type = "nearby_swap_move_selector"
+variable_name = "mitarbeiter_idx"
+max_nearby = 64
+
+[phases.termination]
+unimproved_seconds_spent_limit = 600

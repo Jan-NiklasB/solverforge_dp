@@ -15,6 +15,9 @@ mod balancing;
 mod ueberlappende_schichten;
 mod ruhezeit;
 mod selber_block;
+mod max_60h;
+mod nachtschicht_frei;
+mod durchschnittszeit;
 // @solverforge:end constraint-modules
 
 mod assemble {
@@ -29,9 +32,10 @@ mod assemble {
             ueberlappende_schichten::constraint(),
             ruhezeit::constraint(),
             selber_block::constraint(),
+            max_60h::constraint(),
+            nachtschicht_frei::constraint(),
+            durchschnittszeit::constraint(),
         )
         // @solverforge:end constraint-calls
     }
 }
-/* mod ueberlappende_schichten; */
-/* ueberlappende_schichten::constraint(),*/

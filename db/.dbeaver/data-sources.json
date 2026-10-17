@@ -1,0 +1,40 @@
+{
+	"folders": {},
+	"connections": {
+		"sqlite_ee-1a1414194f2-8b8d3d9c2ff8c91": {
+			"provider": "sqlite-ee",
+			"driver": "sqlite_ee",
+			"name": "db.sqlite",
+			"save-password": true,
+			"configuration": {
+				"database": "/mnt/Daten2/Daten/Programmierung/Rust/SolverForge/Dienstplan/dp/db/db.sqlite",
+				"url": "jdbc:sqlite:/mnt/Daten2/Daten/Programmierung/Rust/SolverForge/Dienstplan/dp/db/db.sqlite",
+				"configurationType": "MANUAL",
+				"type": "dev",
+				"closeIdleConnection": true,
+				"properties": {
+					"sqlite-remote-enabled": "false"
+				},
+				"provider-properties": {
+					"sqlite-extensions": ""
+				}
+			}
+		}
+	},
+	"connection-types": {
+		"dev": {
+			"name": "Development",
+			"color": "255,255,255",
+			"description": "Regular development database",
+			"auto-commit": true,
+			"confirm-execute": false,
+			"confirm-data-change": false,
+			"smart-commit": false,
+			"smart-commit-recover": true,
+			"auto-close-transactions": true,
+			"close-transactions-period": 1800,
+			"auto-close-connections": true,
+			"close-connections-period": 14400
+		}
+	}
+}

@@ -6,6 +6,7 @@ use solverforge::prelude::*;
 use super::Mitarbeiter;
 use super::Schicht;
 use super::Schichtzuordnung;
+use super::QualifikationsKandidaten;
 // @solverforge:end solution-imports
 
 /// The root planning solution.
@@ -26,6 +27,8 @@ pub struct Plan {
     pub schichts: Vec<Schicht>,
     #[planning_entity_collection]
     pub schichtzuordnungs: Vec<Schichtzuordnung>,
+    #[problem_fact_collection]
+    pub kandidaten: Vec<QualifikationsKandidaten>,
     // @solverforge:end solution-collections
     #[planning_score]
     pub score: Option<HardMediumSoftScore>,
@@ -38,13 +41,15 @@ impl Plan {
         mitarbeiters: Vec<Mitarbeiter>,
         schichts: Vec<Schicht>,
         schichtzuordnungs: Vec<Schichtzuordnung>,
+        kandidaten: Vec<QualifikationsKandidaten>,
         // @solverforge:end solution-constructor-params
     ) -> Self {
-        Self {
+        Self{
             // @solverforge:begin solution-constructor-init
             mitarbeiters,
             schichts,
             schichtzuordnungs,
+            kandidaten,
             // @solverforge:end solution-constructor-init
             score: None,
         }

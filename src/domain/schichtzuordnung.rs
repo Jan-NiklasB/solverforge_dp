@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use solverforge::prelude::*;
+use crate::domain::Plan;
 use crate::domain::types::Qualifikation;
 
 /// TODO — describe this entity.
@@ -11,7 +12,12 @@ pub struct Schichtzuordnung {
     pub schicht_id: usize,
     pub qualifikation: Qualifikation,
     // @solverforge:begin entity-variables
-    #[planning_variable(value_range_provider = "mitarbeiters", allows_unassigned = false)]
+    #[planning_variable(
+        value_range_provider = "mitarbeiters",
+        allows_unassigned = false,
+        nearby_value_candidates = "crate::domain::qualifikations_kandidaten::qualifizierte_mitarbeiter",
+        nearby_entity_candidates = "crate::domain::qualifikations_kandidaten::gleiche_qualifikation_sz",
+    )]
     pub mitarbeiter_idx: Option<usize>,
     // @solverforge:end entity-variables
 }

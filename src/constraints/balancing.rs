@@ -1,32 +1,32 @@
-use crate::domain::{Plan, Schichtzuordnung};
+use crate::domain::{Mitarbeiter, Plan, Schichtzuordnung};
 use solverforge::prelude::*;
-use solverforge::stream::collector::LoadBalance;
+use solverforge::stream::collector::count;
 use solverforge::IncrementalConstraint;
 
-/// SOFT: TODO — describe what this constraint optimizes.
+/// MEDIUM: Verteilt die Schichten ueber ALLE Mitarbeiter - auch ueber jene ohne
+/// jede Zuweisung (0 Schichten). Bestraft wird SUM(count_i^2) als MEDIUM.
+///
+/// Die Zuweisungen werden je Mitarbeiter gezaehlt und per `complement` um alle
+/// Mitarbeiter ohne Zuweisung (Default 0) ergaenzt. Dadurch gehen auch untaetige
+/// Mitarbeiter in die Bilanz ein. SUM(count_i^2) entspricht (bis auf eine
+/// loesungsunabhaengige Konstante) SUM((count_i - Mittelwert)^2) und hat damit
+/// dasselbe Optimum wie die Varianz. Nicht zugewiesene Schichtzuordnungen
+/// (Key None) werden nicht bestraft.
 pub fn constraint() -> impl IncrementalConstraint<Plan, HardMediumSoftScore> {
     ConstraintFactory::<Plan, HardMediumSoftScore>::new()
         .for_each(Plan::schichtzuordnungs())
-        .group_by(
-            balance_scope,
-            load_balance(balance_group_key, balance_metric),
+        .group_by(|sz: &Schichtzuordnung| sz.mitarbeiter_idx, count())
+        .complement(
+            Plan::mitarbeiters(),
+            |m: &Mitarbeiter| Some(m.index),
+            |_m: &Mitarbeiter| 0usize,
         )
-        .penalize(balance_weight)
+        .penalize(|emp: &Option<usize>, cnt: &usize| {
+            if emp.is_none() {
+                HardMediumSoftScore::ZERO
+            } else {
+                HardMediumSoftScore::of_medium((*cnt as i64) * (*cnt as i64))
+            }
+        })
         .named("balancing")
-}
-
-fn balance_scope(_entity: &Schichtzuordnung) -> usize {
-    0
-}
-
-fn balance_group_key(entity: &Schichtzuordnung) -> Option<usize> {
-    entity.mitarbeiter_idx
-}
-
-fn balance_metric(_entity: &Schichtzuordnung) -> i64 {
-    1
-}
-
-fn balance_weight(scope: &usize, load: &LoadBalance<Option<usize>>) -> HardMediumSoftScore {
-        HardMediumSoftScore::of_medium(load.unfairness())
 }

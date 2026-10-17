@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>dp — SolverForge</title>
+  <title>Dienstplan Rettungsdienst — SolverForge</title>
   <link rel="stylesheet" href="/sf/sf.css">
   <link rel="stylesheet" href="/sf/vendor/fontawesome/css/fontawesome.min.css">
   <link rel="stylesheet" href="/sf/vendor/fontawesome/css/solid.min.css">
@@ -12,6 +12,9 @@
 <body>
   <div id="sf-app"></div>
   <script src="/sf/sf.js"></script>
-  <script src="/app.js"></script>
+  <script type="module">
+    import { bootApp } from '/app/main.mjs';
+    bootApp();
+  </script>
 </body>
 </html>

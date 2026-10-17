@@ -35,7 +35,7 @@ fn mkplan(s0: (u32, u32), s1: (u32, u32), same_emp: bool) -> Plan {
             mitarbeiter_idx: Some(if same_emp { 0 } else { 1 }),
         },
     ];
-    Plan::new(m, s, z)
+    Plan::new(m, s, z, Vec::new())
 }
 
 #[test]
