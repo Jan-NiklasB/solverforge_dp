@@ -36,7 +36,8 @@ move_tabu_size = 10
 aspiration_enabled = true
 
 [phases.forager]
-type = "first_best_score_improving"
+type = "accepted_count"
+limit = 128
 
 [phases.move_selector]
 type = "union_move_selector"
@@ -57,15 +58,11 @@ unimproved_seconds_spent_limit = 120
 
 # ==========================================
 # PHASE 3: OPTIMIERUNG (Medium/Soft)
-# Great Deluge hebt das Wasser-Niveau je Step langsam an (rain_speed) und
-# akzeptiert Zuege oberhalb des Niveaus, also auch nicht-verbessernde Zuege.
-# So entkommt die Suche lokalen Optima. Nach Erreichen von hard = 0 werden hier
-# nur noch Moves/Swaps *innerhalb derselben Qualifikation* evaluiert
-# (nearby_*_move_selector); die Kandidaten liefern die nearby_*-Hooks der
-# Variable mitarbeiter_idx.
+# Tabu Search optimiert mit Change-/Swap-Moves. Die candidate_values der
+# Variable mitarbeiter_idx begrenzen in allen Phasen die zulaessigen Mitarbeiter.
 # ==========================================
 [[phases]]
-name = "3. Optimierung (Great Deluge)"
+name = "3. Optimierung (Tabu Search)"
 index = 3
 type = "local_search"
 
@@ -74,7 +71,8 @@ type = "tabu_search"
 move_tabu_size = 10
 
 [phases.forager]
-type = "first_best_score_improving"
+type = "accepted_count"
+limit = 128
 
 [phases.move_selector]
 type = "union_move_selector"
@@ -82,14 +80,12 @@ selection_order = "stratified_random"
 weighting = "equal"
 
 [[phases.move_selector.selectors]]
-type = "nearby_change_move_selector"
+type = "change_move_selector"
 variable_name = "mitarbeiter_idx"
-max_nearby = 64
 
 [[phases.move_selector.selectors]]
-type = "nearby_swap_move_selector"
+type = "swap_move_selector"
 variable_name = "mitarbeiter_idx"
-max_nearby = 64
 
 [phases.termination]
 unimproved_seconds_spent_limit = 600

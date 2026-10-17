@@ -5,9 +5,7 @@ use super::Plan;
 use super::types::Qualifikation;
 
 /// Problem-Fact mit den zulaessigen Kandidaten je Qualifikation.
-/// Wird von den `nearby_*`-Hooks der Variable `mitarbeiter_idx` genutzt, damit
-/// nach hard = 0 nur noch Moves/Swaps innerhalb derselben Qualifikation
-/// evaluiert werden.
+/// Begrenzt die Variable `mitarbeiter_idx` in allen Phasen auf qualifizierte Mitarbeiter.
 #[problem_fact]
 #[derive(Serialize, Deserialize)]
 pub struct QualifikationsKandidaten {
@@ -34,14 +32,22 @@ pub fn qualifikations_index(qualifikation: Qualifikation) -> usize {
         .unwrap_or(0)
 }
 
-pub fn qualifizierte_mitarbeiter(
-    solution: &dyn Any,
+pub fn qualifizierte_kandidaten(
+    plan: &Plan,
     entity_index: usize,
     _variable_index: usize,
 ) -> &[usize] {
-    let plan = solution.downcast_ref::<Plan>().expect("Plan erwartet");
     let qualifikation = plan.schichtzuordnungs[entity_index].qualifikation;
     &plan.kandidaten[qualifikations_index(qualifikation)].mitarbeiter
+}
+
+pub fn qualifizierte_mitarbeiter(
+    solution: &dyn Any,
+    entity_index: usize,
+    variable_index: usize,
+) -> &[usize] {
+    let plan = solution.downcast_ref::<Plan>().expect("Plan erwartet");
+    qualifizierte_kandidaten(plan, entity_index, variable_index)
 }
 
 pub fn gleiche_qualifikation_sz(

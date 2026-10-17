@@ -153,6 +153,26 @@ fn generate_plan(count_mitarbeiters: usize, weeks: usize) -> Plan {
         }
     }
 
+    let qualifizierte: Vec<Vec<usize>> = ALL_QUALIFIKATIONEN
+        .iter()
+        .map(|q| mitarbeiters.iter()
+            .filter(|m| m.qualifikation.contains(q))
+            .map(|m| m.index)
+            .collect())
+        .collect();
+    let mut naechster = [0; ALL_QUALIFIKATIONEN.len()];
+    let mut naechster_mitarbeiter = |q: Qualifikation| {
+        let qi = qualifikations_index(q);
+        let kandidaten = &qualifizierte[qi];
+        if kandidaten.is_empty() {
+            None
+        } else {
+            let index = kandidaten[naechster[qi] % kandidaten.len()];
+            naechster[qi] += 1;
+            Some(index)
+        }
+    };
+
     let mut i = 0;
     let mut schichtzuordnungs: Vec<Schichtzuordnung> = Vec::new();
     for s in &schichts {
@@ -161,7 +181,7 @@ fn generate_plan(count_mitarbeiters: usize, weeks: usize) -> Plan {
                 id: format!("schichtzuordnung-{i}"),
                 schicht_id: s.index,
                 qualifikation: s.qualifikation[0].clone(),
-                mitarbeiter_idx: if count_mitarbeiters == 0 { None } else { Some(i % count_mitarbeiters) }
+                mitarbeiter_idx: naechster_mitarbeiter(s.qualifikation[0])
             }
         );
         i+=1;
@@ -170,7 +190,7 @@ fn generate_plan(count_mitarbeiters: usize, weeks: usize) -> Plan {
                 id: format!("schichtzuordnung-{i}"),
                 schicht_id: s.index,
                 qualifikation: s.qualifikation[1].clone(),
-                mitarbeiter_idx: if count_mitarbeiters == 0 { None } else { Some(i % count_mitarbeiters) }
+                mitarbeiter_idx: naechster_mitarbeiter(s.qualifikation[1])
             }
         );
         i+=1;

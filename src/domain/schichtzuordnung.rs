@@ -15,6 +15,7 @@ pub struct Schichtzuordnung {
     #[planning_variable(
         value_range_provider = "mitarbeiters",
         allows_unassigned = false,
+        candidate_values = "crate::domain::qualifikations_kandidaten::qualifizierte_kandidaten",
         nearby_value_candidates = "crate::domain::qualifikations_kandidaten::qualifizierte_mitarbeiter",
         nearby_entity_candidates = "crate::domain::qualifikations_kandidaten::gleiche_qualifikation_sz",
     )]
