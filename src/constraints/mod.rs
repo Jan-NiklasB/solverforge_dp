@@ -18,6 +18,7 @@ mod selber_block;
 mod max_60h;
 mod nachtschicht_frei;
 mod durchschnittszeit;
+mod dienst_block;
 // @solverforge:end constraint-modules
 
 mod assemble {
@@ -35,6 +36,7 @@ mod assemble {
             max_60h::constraint(),
             nachtschicht_frei::constraint(),
             durchschnittszeit::constraint(),
+            dienst_block::constraint(),
         )
         // @solverforge:end constraint-calls
     }
