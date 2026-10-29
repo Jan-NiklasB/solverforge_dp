@@ -36,15 +36,23 @@ function validateUiModel(uiModel) {
   }
 }
 
+function selectConstraints(catalog, fallback) {
+  if (!Array.isArray(catalog)) return fallback;
+  const valid = catalog.filter((entry) => entry && typeof entry.name === 'string');
+  return valid.length ? valid : fallback;
+}
+
 // Loads every browser-boot dependency and returns the assembled boot context.
 export async function loadAppConfig(root = globalThis) {
-  const [config, uiModel] = await Promise.all([
+  const [config, uiModel, constraintCatalog] = await Promise.all([
     requestJson(root, '/sf-config.json'),
     requestJson(root, '/generated/ui-model.json'),
+    requestJson(root, '/constraints').catch(() => null),
   ]);
 
   validateConfig(config);
   validateUiModel(uiModel);
+  const constraints = selectConstraints(constraintCatalog, uiModel.constraints);
 
   const backend = root.SF.createBackend({ type: 'axum', baseUrl: '' });
   const catalog = await backend.listDemoData();
@@ -62,5 +70,6 @@ export async function loadAppConfig(root = globalThis) {
     backend,
     demoId,
     availableDemoIds,
+    constraints,
   };
 }

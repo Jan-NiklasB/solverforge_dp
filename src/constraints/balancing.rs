@@ -3,15 +3,16 @@ use solverforge::prelude::*;
 use solverforge::stream::collector::count;
 use solverforge::IncrementalConstraint;
 
-/// MEDIUM: Verteilt die Schichten ueber ALLE Mitarbeiter - auch ueber jene ohne
-/// jede Zuweisung (0 Schichten). Bestraft wird SUM(count_i^2) als MEDIUM.
+/// SOFT: Verteilt die Schichten ueber ALLE Mitarbeiter - auch ueber jene ohne
+/// jede Zuweisung (0 Schichten). Bestraft wird SUM(count_i^2) als SOFT.
 ///
 /// Die Zuweisungen werden je Mitarbeiter gezaehlt und per `complement` um alle
 /// Mitarbeiter ohne Zuweisung (Default 0) ergaenzt. Dadurch gehen auch untaetige
-/// Mitarbeiter in die Bilanz ein. SUM(count_i^2) entspricht (bis auf eine
-/// loesungsunabhaengige Konstante) SUM((count_i - Mittelwert)^2) und hat damit
-/// dasselbe Optimum wie die Varianz. Nicht zugewiesene Schichtzuordnungen
-/// (Key None) werden nicht bestraft.
+/// Mitarbeiter in die Bilanz ein. Zusammen mit der `balancing_offset`-Reward
+/// (die die loesungsunabhaengige Konstante `n^2 / m` abzieht) ergibt sich
+/// SUM((count_i - Mittelwert)^2): bei perfekter Gleichverteilung ist der
+/// Gesamtscore 0. Nicht zugewiesene Schichtzuordnungen (Key None) werden nicht
+/// bestraft.
 pub fn constraint() -> impl IncrementalConstraint<Plan, HardMediumSoftScore> {
     ConstraintFactory::<Plan, HardMediumSoftScore>::new()
         .for_each(Plan::schichtzuordnungs())
@@ -25,7 +26,7 @@ pub fn constraint() -> impl IncrementalConstraint<Plan, HardMediumSoftScore> {
             if emp.is_none() {
                 HardMediumSoftScore::ZERO
             } else {
-                HardMediumSoftScore::of_medium((*cnt as i64) * (*cnt as i64))
+                HardMediumSoftScore::of_soft((*cnt as i64) * (*cnt as i64))
             }
         })
         .named("balancing")

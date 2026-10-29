@@ -1,44 +1,33 @@
-use crate::domain::{Plan, Schichtzuordnung, Mitarbeiter, Schicht};
-use solverforge::prelude::*;
-use solverforge::stream::joiner::equal_bi;
+use crate::domain::{Plan, Schichtzuordnung, ShiftRelation};
 use solverforge::IncrementalConstraint;
-use solverforge::prelude::joiner::equal_on;
-use solverforge::stream::relational::Leaf;
-use solverforge::stream::relational::operator::Pair;
+use solverforge::prelude::*;
+use solverforge::stream::joiner::{equal_bi, equal_on};
+use solverforge::stream::relational::{Leaf, operator::Pair};
 
-/// HARD: TODO — describe what this constraint enforces.
 pub fn constraint() -> impl IncrementalConstraint<Plan, HardMediumSoftScore> {
     ConstraintFactory::<Plan, HardMediumSoftScore>::new()
-        .for_each(Plan::schichtzuordnungs())
+        .for_each(Plan::shift_relations())
+        .filter(|r: &ShiftRelation| r.rest)
         .join((
-            Plan::schichts(),
-            equal_bi(|sz: &Schichtzuordnung| sz.schicht_id, |s: &Schicht| s.index),
+            Plan::schichtzuordnungs(),
+            equal_bi(
+                |r: &ShiftRelation| r.first,
+                |a: &Schichtzuordnung| a.schicht_id,
+            ),
         ))
+        .filter(|_: &ShiftRelation, a: &Schichtzuordnung| a.mitarbeiter_idx.is_some())
         .join((
             Plan::schichtzuordnungs(),
             equal_on(
-                |row: &Pair<Leaf<'_, Schichtzuordnung>, Leaf<'_, Schicht>>| {
-                    row.left.entity.mitarbeiter_idx
+                |row: &Pair<Leaf<'_, ShiftRelation>, Leaf<'_, Schichtzuordnung>>| {
+                    (row.left.entity.second, row.right.entity.mitarbeiter_idx)
                 },
-                |sz: &Leaf<'_, Schichtzuordnung>| sz.entity.mitarbeiter_idx,
-            ),
-        ))
-        .join((
-            Plan::schichts(),
-            equal_on(
-                |row: &Pair<
-                    Pair<Leaf<'_, Schichtzuordnung>, Leaf<'_, Schicht>>,
-                    Leaf<'_, Schichtzuordnung>,
-                >| Some(row.right.entity.schicht_id),
-                |s: &Leaf<'_, Schicht>| Some(s.entity.index),
+                |a: &Leaf<'_, Schichtzuordnung>| (a.entity.schicht_id, a.entity.mitarbeiter_idx),
             ),
         ))
         .filter(
-            |sz1: &Schichtzuordnung, s1: &Schicht, sz2: &Schichtzuordnung, s2: &Schicht| {
-                sz1.mitarbeiter_idx.is_some()
-                    && sz1.id < sz2.id
-                    && s1.start < s2.ende + chrono::Duration::hours(11)
-                    && s2.start < s1.ende + chrono::Duration::hours(11)
+            |r: &ShiftRelation, a: &Schichtzuordnung, b: &Schichtzuordnung| {
+                r.first != r.second || a.id < b.id
             },
         )
         .penalize(HardMediumSoftScore::ONE_HARD)

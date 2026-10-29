@@ -7,8 +7,12 @@ export function createSolverController({
   onAnalysis,
   onMeta,
   onLifecycle,
+  onTerminal,
   onError,
 }) {
+  let analysisCache = null;
+  let analysisRequest = null;
+
   const solver = sf.createSolver({
     backend,
     statusBar,
@@ -29,14 +33,11 @@ export function createSolverController({
     },
     onComplete(snapshot, meta) {
       publishSnapshot(snapshot, meta);
+      if (typeof onTerminal === 'function') onTerminal(meta);
     },
     onFailure(_message, meta, snapshot, analysis) {
       publishSnapshot(snapshot, meta);
-      if (analysis) onAnalysis(analysis);
-    },
-    onAnalysis(analysis) {
-      onAnalysis(analysis);
-      publishLifecycle();
+      if (analysis) handleAnalysis(analysis);
     },
     onError(message) {
       if (typeof onError === 'function') onError(message);
@@ -48,6 +49,8 @@ export function createSolverController({
     // Starts a new solve after cleaning up any previous terminal retained job.
     async start(planProvider) {
       if (solver.isRunning() || solver.getLifecycleState() === 'PAUSED') return;
+      analysisCache = null;
+      analysisRequest = null;
       await cleanupTerminalJob();
       const plan = await planProvider();
       await solver.start(plan);
@@ -76,11 +79,7 @@ export function createSolverController({
       });
     },
     analyzeSnapshot() {
-      return solver.analyzeSnapshot().then((analysis) => {
-        onAnalysis(analysis);
-        publishLifecycle();
-        return analysis;
-      });
+      return requestAnalysis();
     },
     getLifecycleState() {
       return solver.getLifecycleState();
@@ -92,6 +91,35 @@ export function createSolverController({
       return solver.getSnapshotRevision();
     },
   };
+
+  // Fetches the analysis at most once per job/revision and deduplicates in-flight requests.
+  function requestAnalysis() {
+    const jobId = solver.getJobId();
+    if (!jobId) return Promise.reject(new Error('No retained job is available'));
+    const revision = solver.getSnapshotRevision();
+    if (analysisCache && analysisCache.jobId === jobId && analysisCache.revision === revision) {
+      return Promise.resolve(analysisCache.analysis);
+    }
+    if (analysisRequest && analysisRequest.jobId === jobId && analysisRequest.revision === revision) {
+      return analysisRequest.promise;
+    }
+
+    const request = { jobId, revision, promise: null };
+    request.promise = solver.analyzeSnapshot().then((analysis) => {
+      analysisCache = { jobId, revision: solver.getSnapshotRevision(), analysis };
+      handleAnalysis(analysis);
+      publishLifecycle();
+      return analysis;
+    }).finally(() => {
+      if (analysisRequest === request) analysisRequest = null;
+    });
+    analysisRequest = request;
+    return request.promise;
+  }
+
+  function handleAnalysis(analysis) {
+    if (typeof onAnalysis === 'function') onAnalysis(analysis);
+  }
 
   // Publishes the latest solution and lifecycle metadata back to the app shell.
   function publishSnapshot(snapshot, meta) {

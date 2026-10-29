@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use solverforge::ConstraintSet;
 use std::sync::Arc;
 
 use super::dto::{
@@ -14,6 +15,8 @@ use super::dto::{
 use super::sse;
 use crate::data::{generate, DemoData};
 use crate::solver::SolverService;
+
+type ApiError = (StatusCode, String);
 
 /// Shared application state.
 pub struct AppState {
@@ -39,6 +42,7 @@ pub fn router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/info", get(info))
+        .route("/constraints", get(list_constraints))
         .route("/demo-data", get(list_demo_data))
         .route("/demo-data/{id}", get(get_demo_data))
         .route("/jobs", post(create_job))
@@ -82,6 +86,27 @@ async fn info() -> Json<InfoResponse> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+struct ConstraintInfoResponse {
+    name: String,
+    #[serde(rename = "type")]
+    constraint_type: &'static str,
+}
+
+async fn list_constraints() -> Json<Vec<ConstraintInfoResponse>> {
+    let constraints = crate::constraints::create_constraints();
+    let entries = constraints
+        .constraint_metadata()
+        .into_iter()
+        .map(|metadata| ConstraintInfoResponse {
+            name: metadata.name().to_string(),
+            constraint_type: if metadata.is_hard { "hard" } else { "soft" },
+        })
+        .collect();
+    Json(entries)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct DemoDataCatalogResponse {
     default_id: &'static str,
     available_ids: Vec<&'static str>,
@@ -99,7 +124,9 @@ async fn list_demo_data() -> Json<DemoDataCatalogResponse> {
 
 async fn get_demo_data(Path(id): Path<String>) -> Result<Json<PlanDto>, StatusCode> {
     let demo = id.parse::<DemoData>().map_err(|_| StatusCode::NOT_FOUND)?;
-    let plan = generate(demo);
+    let plan = tokio::task::spawn_blocking(move || generate(demo))
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(PlanDto::from_plan(&plan)))
 }
 
@@ -112,31 +139,28 @@ struct CreateJobResponse {
 async fn create_job(
     State(state): State<Arc<AppState>>,
     Json(dto): Json<PlanDto>,
-) -> Result<Json<CreateJobResponse>, StatusCode> {
-    let plan = dto.to_domain().map_err(|_| StatusCode::BAD_REQUEST)?;
-    let id = state
-        .solver
-        .start_job(plan)
-        .map_err(status_from_solver_error)?;
+) -> Result<Json<CreateJobResponse>, ApiError> {
+    let plan = tokio::task::spawn_blocking(move || dto.to_domain())
+        .await
+        .map_err(join_error)?
+        .map_err(plan_error)?;
+    let id = state.solver.start_job(plan).map_err(solver_error)?;
     Ok(Json(CreateJobResponse { id }))
 }
 
 async fn create_qualified_job(
     State(state): State<Arc<AppState>>,
     Json(request): Json<QualifiedJobRequestDto>,
-) -> Result<Json<CreateJobResponse>, StatusCode> {
-    let plan = request
-        .plan
-        .to_domain()
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
-    let provenance = request
-        .provenance
-        .to_runtime()
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
+) -> Result<Json<CreateJobResponse>, ApiError> {
+    let provenance = request.provenance.to_runtime().map_err(invalid_request)?;
+    let plan = tokio::task::spawn_blocking(move || request.plan.to_domain())
+        .await
+        .map_err(join_error)?
+        .map_err(plan_error)?;
     let id = state
         .solver
         .start_qualified_job(plan, provenance)
-        .map_err(status_from_solver_error)?;
+        .map_err(solver_error)?;
     Ok(Json(CreateJobResponse { id }))
 }
 
@@ -148,7 +172,7 @@ async fn get_job(
     let status = state
         .solver
         .get_status(&id)
-        .map_err(status_from_solver_error)?;
+        .map_err(|error| status_from_solver_error(&error))?;
     Ok(Json(JobSummaryDto::from_status(job_id, &status)))
 }
 
@@ -166,7 +190,7 @@ async fn get_telemetry_detail(
     let detail = state
         .solver
         .get_telemetry_detail(&id)
-        .map_err(status_from_solver_error)?;
+        .map_err(|error| status_from_solver_error(&error))?;
     Ok(Json(JobTelemetryDetailDto::from_runtime(&detail)))
 }
 
@@ -183,7 +207,7 @@ async fn get_snapshot(
     let snapshot = state
         .solver
         .get_snapshot(&id, query.snapshot_revision)
-        .map_err(status_from_solver_error)?;
+        .map_err(|error| status_from_solver_error(&error))?;
     Ok(Json(JobSnapshotDto::from_snapshot(&snapshot)))
 }
 
@@ -192,10 +216,12 @@ async fn analyze_by_id(
     Path(id): Path<String>,
     Query(query): Query<SnapshotQuery>,
 ) -> Result<Json<JobAnalysisDto>, StatusCode> {
-    let snapshot_analysis = state
-        .solver
-        .analyze_snapshot(&id, query.snapshot_revision)
-        .map_err(status_from_solver_error)?;
+    let revision = query.snapshot_revision;
+    let snapshot_analysis =
+        tokio::task::spawn_blocking(move || state.solver.analyze_snapshot(&id, revision))
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .map_err(|error| status_from_solver_error(&error))?;
     let analysis = analysis_response(&snapshot_analysis.analysis);
     Ok(Json(JobAnalysisDto::from_snapshot_analysis(
         &snapshot_analysis,
@@ -207,7 +233,10 @@ async fn pause_job(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, StatusCode> {
-    state.solver.pause(&id).map_err(status_from_solver_error)?;
+    state
+        .solver
+        .pause(&id)
+        .map_err(|error| status_from_solver_error(&error))?;
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -215,7 +244,10 @@ async fn resume_job(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, StatusCode> {
-    state.solver.resume(&id).map_err(status_from_solver_error)?;
+    state
+        .solver
+        .resume(&id)
+        .map_err(|error| status_from_solver_error(&error))?;
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -223,7 +255,10 @@ async fn cancel_job(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, StatusCode> {
-    state.solver.cancel(&id).map_err(status_from_solver_error)?;
+    state
+        .solver
+        .cancel(&id)
+        .map_err(|error| status_from_solver_error(&error))?;
     Ok(StatusCode::ACCEPTED)
 }
 
@@ -231,7 +266,10 @@ async fn delete_job(
     State(state): State<Arc<AppState>>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, StatusCode> {
-    state.solver.delete(&id).map_err(status_from_solver_error)?;
+    state
+        .solver
+        .delete(&id)
+        .map_err(|error| status_from_solver_error(&error))?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -239,7 +277,24 @@ fn parse_job_id(id: &str) -> Result<usize, StatusCode> {
     id.parse::<usize>().map_err(|_| StatusCode::NOT_FOUND)
 }
 
-fn status_from_solver_error(error: solverforge::SolverManagerError) -> StatusCode {
+fn join_error(error: tokio::task::JoinError) -> ApiError {
+    (StatusCode::INTERNAL_SERVER_ERROR, error.to_string())
+}
+
+fn plan_error(error: serde_json::Error) -> ApiError {
+    (StatusCode::BAD_REQUEST, error.to_string())
+}
+
+fn invalid_request(error: String) -> ApiError {
+    (StatusCode::BAD_REQUEST, error)
+}
+
+fn solver_error(error: solverforge::SolverManagerError) -> ApiError {
+    let status = status_from_solver_error(&error);
+    (status, error.to_string())
+}
+
+fn status_from_solver_error(error: &solverforge::SolverManagerError) -> StatusCode {
     match error {
         solverforge::SolverManagerError::NoFreeJobSlots => StatusCode::SERVICE_UNAVAILABLE,
         solverforge::SolverManagerError::JobNotFound { .. } => StatusCode::NOT_FOUND,

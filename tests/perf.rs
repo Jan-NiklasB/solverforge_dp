@@ -14,6 +14,10 @@ mod max_60h;
 mod nachtschicht_frei;
 #[path = "../src/constraints/durchschnittszeit.rs"]
 mod durchschnittszeit;
+#[path = "../src/constraints/fahrzeugwechsel.rs"]
+mod fahrzeugwechsel;
+#[path = "../src/constraints/wachenwechsel.rs"]
+mod wachenwechsel;
 
 use dp::data::{generate, DemoData};
 use dp::domain;
@@ -82,6 +86,8 @@ fn perf_standard() {
     bench("balancing", || balancing::constraint().evaluate(&plan).soft());
     bench("nachtschicht_frei", || nachtschicht_frei::constraint().evaluate(&plan).medium());
     bench("durchschnittszeit", || durchschnittszeit::constraint().evaluate(&plan).medium());
+    bench("fahrzeugwechsel", || fahrzeugwechsel::constraint().evaluate(&plan).soft());
+    bench("wachenwechsel", || wachenwechsel::constraint().evaluate(&plan).medium());
     println!("durchschnittszeit medium(seed) = {}", durchschnittszeit::constraint().evaluate(&plan).medium());
     println!("nachtschicht_frei medium(seed) = {}", nachtschicht_frei::constraint().evaluate(&plan).medium());
 
@@ -95,4 +101,6 @@ fn perf_standard() {
     bench_incr("balancing", balancing::constraint(), &mut plan, m);
     bench_incr("nachtschicht_frei", nachtschicht_frei::constraint(), &mut plan, m);
     bench_incr("durchschnittszeit", durchschnittszeit::constraint(), &mut plan, m);
+    bench_incr("fahrzeugwechsel", fahrzeugwechsel::constraint(), &mut plan, m);
+    bench_incr("wachenwechsel", wachenwechsel::constraint(), &mut plan, m);
 }

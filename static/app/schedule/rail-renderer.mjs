@@ -32,13 +32,16 @@ export function renderEmptyScheduleMessage(sf, container) {
   container.appendChild(sf.el('p', null, 'Keine Schichtzuordnungen vorhanden.'));
 }
 
-// Adapts the schedule model to the shared `SF.rail.createTimeline()` widget.
-export function renderRailSchedule({ sf, container, axis, headerLabel, lanes }) {
-  const model = {
+// Builds the shared timeline model from axis and lane definitions.
+export function buildRailModel({ axis, lanes }) {
+  return {
     axis: buildTimelineAxis(axis),
     lanes: lanes.map((lane) => buildTimelineLaneModel(lane)),
   };
+}
 
+// Creates the shared rail timeline. Reuse `timeline.setModel()` for live updates.
+export function renderRailSchedule({ sf, container, headerLabel, model }) {
   const timeline = sf.rail.createTimeline({
     label: headerLabel,
     labelWidth: DEFAULT_LABEL_WIDTH,

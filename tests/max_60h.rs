@@ -17,10 +17,10 @@ fn mkemp(i: usize) -> Mitarbeiter {
         format!("m{i}"),
         i,
         format!("m{i}"),
-        "Station 40".to_string(),
+        "40".to_string(),
         0,
         false,
-        vec![],
+        vec![Default::default()],
         false,
         100,
     )
@@ -34,7 +34,8 @@ fn mkschicht(i: usize, start_day: i64) -> Schicht {
         format!("s{i}"),
         start,
         start + chrono::Duration::hours(12),
-        "Station 40".to_string(),
+        "40".to_string(),
+        String::new(),
         vec![],
     )
 }

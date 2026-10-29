@@ -1,16 +1,13 @@
 import { groupShiftRowsByLocation } from './grouping.mjs';
 import { buildShiftPresentation } from './presentation.mjs';
-import { assignmentTone, buildBlockMeta, renderEmptyScheduleMessage, renderRailSchedule } from './rail-renderer.mjs';
+import { assignmentTone, buildBlockMeta, buildRailModel, renderEmptyScheduleMessage, renderRailSchedule } from './rail-renderer.mjs';
 
-// Renders the "Nach Wache" schedule tab on top of the shared rail timeline.
-export function renderLocationView({ sf, container, data, view }) {
+// Builds the normalized rail model for the "Nach Wache" view.
+export function buildLocationModel({ data, view }) {
   const assignments = data[view.entityPlural] || [];
   const employees = data[view.sourcePlural] || [];
   const shifts = data.schichts || [];
-  if (!assignments.length) {
-    renderEmptyScheduleMessage(sf, container);
-    return;
-  }
+  if (!assignments.length) return null;
 
   const presentation = buildShiftPresentation(assignments, employees, view.variableField, shifts);
   const groups = groupShiftRowsByLocation(presentation.rows);
@@ -32,12 +29,15 @@ export function renderLocationView({ sf, container, data, view }) {
     },
   }));
 
-  renderRailSchedule({
-    sf,
-    container,
-    axis: presentation.axis,
-    headerLabel: 'Wache',
-    lanes,
-    unassignedCount: presentation.unassignedCount,
-  });
+  return buildRailModel({ axis: presentation.axis, lanes });
+}
+
+// Renders or updates the "Nach Wache" schedule tab.
+export function renderLocationView({ sf, container, data, view, model }) {
+  const railModel = model || buildLocationModel({ data, view });
+  if (!railModel) {
+    renderEmptyScheduleMessage(sf, container);
+    return null;
+  }
+  return renderRailSchedule({ sf, container, headerLabel: 'Wache', model: railModel });
 }

@@ -12,6 +12,7 @@ pub use self::assemble::create_constraints;
 mod shift_assigned;
 mod benoetigte_qualifikation;
 mod balancing;
+mod balancing_offset;
 mod ueberlappende_schichten;
 mod ruhezeit;
 mod selber_block;
@@ -19,6 +20,8 @@ mod max_60h;
 mod nachtschicht_frei;
 mod durchschnittszeit;
 mod dienst_block;
+mod fahrzeugwechsel;
+mod wachenwechsel;
 // @solverforge:end constraint-modules
 
 mod assemble {
@@ -30,6 +33,7 @@ mod assemble {
             shift_assigned::constraint(),
             benoetigte_qualifikation::constraint(),
             balancing::constraint(),
+            balancing_offset::constraint(),
             ueberlappende_schichten::constraint(),
             ruhezeit::constraint(),
             selber_block::constraint(),
@@ -37,6 +41,8 @@ mod assemble {
             nachtschicht_frei::constraint(),
             durchschnittszeit::constraint(),
             dienst_block::constraint(),
+            fahrzeugwechsel::constraint(),
+            wachenwechsel::constraint(),
         )
         // @solverforge:end constraint-calls
     }

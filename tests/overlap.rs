@@ -14,12 +14,12 @@ fn dt(h: u32) -> chrono::NaiveDateTime {
 
 fn mkplan(s0: (u32, u32), s1: (u32, u32), same_emp: bool) -> Plan {
     let m = vec![
-        Mitarbeiter::new("m0", 0, "a", "w".to_string(), 0, false, vec![], false, 100),
-        Mitarbeiter::new("m1", 1, "b", "w".to_string(), 0, false, vec![], false, 100),
+        Mitarbeiter::new("m0", 0, "a", "w".to_string(), 0, false, vec![Default::default()], false, 100),
+        Mitarbeiter::new("m1", 1, "b", "w".to_string(), 0, false, vec![Default::default()], false, 100),
     ];
     let s = vec![
-        Schicht::new("s0", 0, "s0", dt(s0.0), dt(s0.1), "w".to_string(), vec![]),
-        Schicht::new("s1", 1, "s1", dt(s1.0), dt(s1.1), "w".to_string(), vec![]),
+        Schicht::new("s0", 0, "s0", dt(s0.0), dt(s0.1), "w".to_string(), String::new(), vec![]),
+        Schicht::new("s1", 1, "s1", dt(s1.0), dt(s1.1), "w".to_string(), String::new(), vec![]),
     ];
     let z = vec![
         Schichtzuordnung {

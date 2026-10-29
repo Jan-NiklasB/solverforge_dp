@@ -58,6 +58,7 @@ export function createAppShell({
   activeTab,
   actions,
 }) {
+  appElement.classList.add('sf-app');
   const viewRoots = {};
   const header = sf.createHeader({
     logo: '/sf/img/ouroboros.svg',
@@ -74,6 +75,9 @@ export function createAppShell({
   statusBar.bindHeader(header);
   appElement.appendChild(statusBar.el);
 
+  const notice = sf.el('div', { className: 'app-notice', hidden: 'hidden' });
+  appElement.appendChild(notice);
+
   const demoGroup = buildDemoSwitch({
     sf,
     header,
@@ -81,6 +85,37 @@ export function createAppShell({
     demoId,
     onDemoChange: actions.onDemoChange,
   });
+
+  const actionControls = header.sfControls && header.sfControls.actions;
+  if (actionControls && typeof actions.onImport === 'function') {
+    const planActions = sf.el('div', { className: 'sf-plan-actions' });
+    planActions.appendChild(sf.createButton({
+      text: 'Plan laden',
+      variant: 'ghost',
+      icon: 'fa-file-import',
+      onClick: actions.onImport,
+    }));
+
+    if (typeof actions.onExportPlan === 'function') {
+      planActions.appendChild(sf.createButton({
+        text: 'Plan exportieren',
+        variant: 'ghost',
+        icon: 'fa-file-export',
+        onClick: actions.onExportPlan,
+      }));
+    }
+
+    actionControls.appendChild(planActions);
+  }
+
+  if (actionControls && typeof actions.onRefreshLanes === 'function') {
+    actionControls.appendChild(sf.createButton({
+      text: 'Lanes aktualisieren',
+      variant: 'ghost',
+      icon: 'fa-rotate',
+      onClick: actions.onRefreshLanes,
+    }));
+  }
 
   uiModel.views.forEach((view) => {
     const panel = sf.el('div', { className: 'sf-content', style: { display: 'none' } });
@@ -145,6 +180,24 @@ export function createAppShell({
       }
       apiPanel.innerHTML = '';
       apiPanel.appendChild(sf.createApiGuide({ endpoints: buildApiGuideEndpoints(id, root) }));
+    },
+    setNotice(text, kind = 'info') {
+      notice.hidden = false;
+      notice.textContent = text;
+      notice.dataset.kind = kind;
+    },
+    clearNotice() {
+      notice.hidden = true;
+      notice.textContent = '';
+      notice.dataset.kind = '';
+    },
+    setAnalyzeBusy(busy) {
+      const button = header.sfControls && header.sfControls.analyzeBtn;
+      if (button) button.disabled = !!busy;
+    },
+    setSolveBusy(busy) {
+      const button = header.sfControls && header.sfControls.solveBtn;
+      if (button) button.disabled = !!busy;
     },
   };
 

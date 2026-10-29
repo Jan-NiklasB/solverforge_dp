@@ -31,9 +31,9 @@ pub fn available_demo_data() -> &'static [DemoData] {
 impl DemoData {
     pub fn id(self) -> &'static str {
         match self {
-                        DemoData::Small => "SMALL",
-                        DemoData::Standard => "STANDARD",
-                        DemoData::Large => "LARGE",
+            DemoData::Small => "SMALL",
+            DemoData::Standard => "STANDARD",
+            DemoData::Large => "LARGE",
         }
     }
 
@@ -51,9 +51,9 @@ impl FromStr for DemoData {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_ascii_uppercase().as_str() {
-                        "SMALL" => Ok(DemoData::Small),
-                        "STANDARD" => Ok(DemoData::Standard),
-                        "LARGE" => Ok(DemoData::Large),
+            "SMALL" => Ok(DemoData::Small),
+            "STANDARD" => Ok(DemoData::Standard),
+            "LARGE" => Ok(DemoData::Large),
             _ => Err(()),
         }
     }
@@ -61,48 +61,54 @@ impl FromStr for DemoData {
 
 pub fn generate(demo: DemoData) -> Plan {
     match demo {
-                DemoData::Small => generate_plan(45, 1),
-                DemoData::Standard => generate_plan(45, 4),
-                DemoData::Large => generate_plan(120, 28),
+        DemoData::Small => generate_plan(45, 1),
+        DemoData::Standard => generate_plan(45, 4),
+        DemoData::Large => generate_plan(120, 28),
     }
 }
 
-fn weekly_template(weekday: Weekday) -> &'static [(&'static str, u32, u32)] {
+fn weekly_template(weekday: Weekday) -> &'static [(&'static str, u32, u32, &'static [Qualifikation])] {
     match weekday {
         Weekday::Mon | Weekday::Tue | Weekday::Wed | Weekday::Thu => &[
-            ("TV1", 6, 18),
-            ("NV1", 18, 6),
-            ("TV2", 6, 18),
-            ("NV2", 18, 6),
-            ("TV3", 7, 19),
-            ("TM1", 6, 18),
-            ("NM1", 18, 6),
+            ("TV1", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NV1", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TV2", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NV2", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TV3", 7, 19, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TM1", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NM1", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TVN", 6, 18, &[Qualifikation::NFS]),
+            ("NVN", 18, 6, &[Qualifikation::NFS]),
         ],
         Weekday::Fri | Weekday::Sat => &[
-            ("TV1", 6, 18),
-            ("NV1", 18, 6),
-            ("TV2", 6, 18),
-            ("NV2", 18, 6),
-            ("TV3F", 7, 15),
-            ("TV3S", 15, 23),
-            ("TM1", 6, 18),
-            ("NM1", 18, 6),
+            ("TV1", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NV1", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TV2", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NV2", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TV3F", 7, 15, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TV3S", 15, 23, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TM1", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NM1", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TVN", 6, 18, &[Qualifikation::NFS]),
+            ("NVN", 18, 6, &[Qualifikation::NFS]),
         ],
         Weekday::Sun => &[
-            ("TV1", 6, 18),
-            ("NV1", 18, 6),
-            ("TV2", 6, 18),
-            ("NV2", 18, 6),
-            ("TM1", 6, 18),
-            ("NM1", 18, 6),
+            ("TV1", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NV1", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TV2", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NV2", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TM1", 6, 18, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("NM1", 18, 6, &[Qualifikation::RS, Qualifikation::NFS]),
+            ("TVN", 6, 18, &[Qualifikation::NFS]),
+            ("NVN", 18, 6, &[Qualifikation::NFS]),
         ],
     }
 }
 
 fn station_for(name: &str) -> &'static str {
     match name.as_bytes().get(1) {
-        Some(b'M') => "Station 41",
-        _ => "Station 40",
+        Some(b'M') => "41",
+        _ => "40",
     }
 }
 
@@ -120,7 +126,11 @@ fn generate_plan(count_mitarbeiters: usize, weeks: usize) -> Plan {
                 id: format!("mitarbeiter-{idx}"),
                 index: idx,
                 name: format!("{q:?}{nr}"),
-                stammwache: (*["Station 40", "Station 42"].choose(&mut rng()).unwrap()).parse::<String>().unwrap(),
+                stammwache: ["40", "42"]
+                    .choose(&mut rng())
+                    .copied()
+                    .unwrap_or("40")
+                    .to_string(),
                 schichtgruppe: ((nr as i32 - 1) % SCHICHTGRUPPEN) + 1,
                 qualifikation: vec![q],
                 keine_nacht: rng().random_bool(0.05),
@@ -135,7 +145,7 @@ fn generate_plan(count_mitarbeiters: usize, weeks: usize) -> Plan {
     for w in 0..weeks {
         for d in 0..7 {
             let day = base + Duration::days((w * 7 + d) as i64);
-            for (name, start_h, end_h) in weekly_template(day.weekday()) {
+            for (name, start_h, end_h, qualifikation) in weekly_template(day.weekday()) {
                 let start = NaiveDateTime::new(day, NaiveTime::from_hms_opt(*start_h, 0, 0).unwrap());
                 let end_date = if end_h > start_h { day } else { day + Duration::days(1) };
                 let ende = NaiveDateTime::new(end_date, NaiveTime::from_hms_opt(*end_h, 0, 0).unwrap());
@@ -146,34 +156,48 @@ fn generate_plan(count_mitarbeiters: usize, weeks: usize) -> Plan {
                     start,
                     ende,
                     wache: station_for(name).to_string(),
-                    qualifikation: vec![Qualifikation::RS, Qualifikation::NFS]
+                    fahrzeug: Schicht::fahrzeug_fuer_name(name),
+                    qualifikation: qualifikation.to_vec()
                 });
                 idx += 1;
             }
         }
     }
 
+    let qualifizierte: Vec<Vec<usize>> = ALL_QUALIFIKATIONEN
+        .iter()
+        .map(|q| mitarbeiters.iter()
+            .filter(|m| m.qualifikation.contains(q))
+            .map(|m| m.index)
+            .collect())
+        .collect();
+    let mut naechster = [0; ALL_QUALIFIKATIONEN.len()];
+    let mut naechster_mitarbeiter = |q: Qualifikation| {
+        let qi = qualifikations_index(q);
+        let kandidaten = &qualifizierte[qi];
+        if kandidaten.is_empty() {
+            None
+        } else {
+            let index = kandidaten[naechster[qi] % kandidaten.len()];
+            naechster[qi] += 1;
+            Some(index)
+        }
+    };
+
     let mut i = 0;
     let mut schichtzuordnungs: Vec<Schichtzuordnung> = Vec::new();
     for s in &schichts {
-        schichtzuordnungs.push(
-            Schichtzuordnung {
-                id: format!("schichtzuordnung-{i}"),
-                schicht_id: s.index,
-                qualifikation: s.qualifikation[0].clone(),
-                mitarbeiter_idx: if count_mitarbeiters == 0 { None } else { Some(i % count_mitarbeiters) }
-            }
-        );
-        i+=1;
-        schichtzuordnungs.push(
-            Schichtzuordnung {
-                id: format!("schichtzuordnung-{i}"),
-                schicht_id: s.index,
-                qualifikation: s.qualifikation[1].clone(),
-                mitarbeiter_idx: if count_mitarbeiters == 0 { None } else { Some(i % count_mitarbeiters) }
-            }
-        );
-        i+=1;
+        for q in &s.qualifikation {
+            schichtzuordnungs.push(
+                Schichtzuordnung {
+                    id: format!("schichtzuordnung-{i}"),
+                    schicht_id: s.index,
+                    qualifikation: *q,
+                    mitarbeiter_idx: naechster_mitarbeiter(*q)
+                }
+            );
+            i+=1;
+        }
     }
 
     let kandidaten = ALL_QUALIFIKATIONEN
